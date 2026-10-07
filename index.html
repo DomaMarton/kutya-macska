@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kutya / Macska hanggomb</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f5f0e8;
+    margin: 0;
+    padding: 20px;
+  }
+  #valto {
+    display: inline-block;
+    background: #fff;
+    border: 2px solid #ccc;
+    border-radius: 30px;
+    padding: 5px;
+    margin-bottom: 10px;
+  }
+  #valto button {
+    font-size: 18px;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 25px;
+    background: transparent;
+    cursor: pointer;
+  }
+  #valto button.aktiv-kutya { background: #8d6e63; color: white; }
+  #valto button.aktiv-macska { background: #ff8f00; color: white; }
+  h1 { margin-bottom: 5px; }
+  p.leiras { color: #555; margin-top: 0; }
+  #kepKeret {
+    position: relative;
+    display: inline-block;
+    margin: 15px 0;
+  }
+  #allatKep {
+    width: 100%;
+    max-width: 500px;
+    height: 340px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 4px solid #8d6e63;
+    background: #ddd;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  #allatKep.hangotAd {
+    border-color: #e53935;
+    animation: raz 0.18s infinite;
+  }
+  body.macska-mod #allatKep { border-color: #ff8f00; }
+  body.macska-mod #allatKep.hangotAd { border-color: #e53935; }
+  @keyframes raz {
+    0% { transform: rotate(-1deg) scale(1.01); }
+    50% { transform: rotate(1deg) scale(1.02); }
+    100% { transform: rotate(-1deg) scale(1.01); }
+  }
+  #hangBuborek {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ffeb3b;
+    border: 2px solid #000;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 28px;
+    font-weight: bold;
+    display: none;
+  }
+  #hangGomb {
+    font-size: 22px;
+    padding: 18px 40px;
+    border-radius: 12px;
+    border: none;
+    background: #4caf50;
+    color: white;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+  }
+  #hangGomb:active, #hangGomb.lenyomva {
+    background: #e53935;
+    transform: scale(0.96);
+  }
+  #allapot, #szamlalo {
+    font-size: 18px;
+    margin: 10px 0;
+  }
+  .forras { font-size: 12px; color: #777; margin-top: 20px; }
+  .forras a { color: #777; }
+</style>
+</head>
+<body>
+
+<div id="valto">
+  <button id="kutyaModGomb" class="aktiv-kutya">🐶 Kutya</button>
+  <button id="macskaModGomb">🐱 Macska</button>
+</div>
+
+<h1 id="cim">🐶 Nyomd és ugass!</h1>
+<p class="leiras" id="leiras">Tartsd <b>lenyomva</b> a gombot (egérrel, ujjal vagy SPACE-szel),<br>amíg nyomva van, a kutya ugat: váltogatja a két képet.</p>
+
+<div id="kepKeret">
+  <img id="allatKep" src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Close-up_portrait_of_dog.jpg" alt="állat">
+  <div id="hangBuborek">VAU! 🗣️</div>
+</div>
+
+<div id="allapot">😴 A kutya most csendes...</div>
+<div id="szamlalo">Ugatások száma: 0</div>
+
+<div>
+  <button id="hangGomb">🐾 UGASS! (nyomd le és tartsd)</button>
+</div>
+
+<p>
+  <label><input type="checkbox" id="hangCheckbox" checked> hang is legyen (Web Audio, külső fájl nélkül)</label>
+</p>
+
+<div class="forras" id="forras">
+  Képek forrása (Wikimedia Commons):<br>
+  Kutya nyugodt: <a href="https://commons.wikimedia.org/wiki/File:Close-up_portrait_of_dog.jpg" target="_blank">Close-up portrait of dog – Pittigrilli (CC BY-SA 4.0)</a><br>
+  Kutya ugat: <a href="https://commons.wikimedia.org/wiki/File:Our_dog_(barking).jpg" target="_blank">Our dog (barking) – Wald-Burger8 (CC BY-SA 3.0)</a><br>
+  Macska nyugodt: <a href="https://commons.wikimedia.org/wiki/File:A-Cat.jpg" target="_blank">A-Cat – Florinux (CC BY-SA 3.0)</a><br>
+  Macska nyávog: <a href="https://commons.wikimedia.org/wiki/File:Meowing_Cat.jpg" target="_blank">Meowing Cat – CC0</a>
+</div>
+
+<script>
+  // Képek a netről (Wikimedia Commons):
+  const ALLATOK = {
+    kutya: {
+      nyugodt: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Close-up_portrait_of_dog.jpg",
+      hangos:  "https://upload.wikimedia.org/wikipedia/commons/c/c2/Our_dog_%28barking%29.jpg",
+      cim: "🐶 Nyomd és ugass!",
+      leiras: 'Tartsd <b>lenyomva</b> a gombot (egérrel, ujjal vagy SPACE-szel),<br>amíg nyomva van, a kutya ugat: váltogatja a két képet.',
+      gomb: "🐾 UGASS! (nyomd le és tartsd)",
+      buborek: "VAU! 🗣️",
+      csendesAllapot: "😴 A kutya most csendes... Engedd fel, elhallgat.",
+      hangosAllapot: "🐕 VAU-VAU! Ugat a kutya...",
+      szamlaloNev: "Ugatások száma",
+      alt: "kutya"
+    },
+    macska: {
+      nyugodt: "https://upload.wikimedia.org/wikipedia/commons/7/74/A-Cat.jpg",
+      hangos:  "https://upload.wikimedia.org/wikipedia/commons/7/76/Meowing_Cat.jpg",
+      cim: "🐱 Nyomd és nyávogj!",
+      leiras: 'Tartsd <b>lenyomva</b> a gombot (egérrel, ujjal vagy SPACE-szel),<br>amíg nyomva van, a macska nyávog: váltogatja a két képet.',
+      gomb: "🐾 NYÁVOGJ! (nyomd le és tartsd)",
+      buborek: "MIAÚ! 🗣️",
+      csendesAllapot: "😴 A macska most csendes... Engedd fel, elhallgat.",
+      hangosAllapot: "🐈 MIAÚ-MIAÚ! Nyávog a macska...",
+      szamlaloNev: "Nyávogások száma",
+      alt: "macska"
+    }
+  };
+
+  let aktualisMod = "kutya";
+
+  const kep = document.getElementById("allatKep");
+  const gomb = document.getElementById("hangGomb");
+  const allapot = document.getElementById("allapot");
+  const szamlaloElem = document.getElementById("szamlalo");
+  const hangBuborek = document.getElementById("hangBuborek");
+  const hangCheckbox = document.getElementById("hangCheckbox");
+  const cim = document.getElementById("cim");
+  const leiras = document.getElementById("leiras");
+  const kutyaModGomb = document.getElementById("kutyaModGomb");
+  const macskaModGomb = document.getElementById("macskaModGomb");
+
+  // Mind a 4 kép előtöltése
+  Object.values(ALLATOK).forEach(a => { new Image().src = a.nyugodt; new Image().src = a.hangos; });
+
+  let hangInterval = null;
+  let eppenHangosKep = false;
+  let hangSzam = { kutya: 0, macska: 0 };
+  let audioCtx = null;
+
+  function hangotJatszik() {
+    if (!hangCheckbox.checked) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      if (aktualisMod === "kutya") {
+        // VAU: rövid, mély, leeső
+        osc.type = "square";
+        osc.frequency.setValueAtTime(400, t);
+        osc.frequency.exponentialRampToValueAtTime(120, t + 0.15);
+        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      } else {
+        // MIAÚ: hosszabb, magas, felszálló majd leeső
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(600, t);
+        osc.frequency.linearRampToValueAtTime(900, t + 0.15);
+        osc.frequency.linearRampToValueAtTime(500, t + 0.35);
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+        osc.start(t);
+        osc.stop(t + 0.4);
+      }
+    } catch (e) {}
+  }
+
+  function mutatHangos(hangos) {
+    const cfg = ALLATOK[aktualisMod];
+    eppenHangosKep = hangos;
+    if (hangos) {
+      kep.src = cfg.hangos;
+      kep.classList.add("hangotAd");
+      hangBuborek.style.display = "block";
+      allapot.textContent = cfg.hangosAllapot;
+      hangSzam[aktualisMod]++;
+      szamlaloElem.textContent = cfg.szamlaloNev + ": " + hangSzam[aktualisMod];
+      hangotJatszik();
+    } else {
+      kep.src = cfg.nyugodt;
+      kep.classList.remove("hangotAd");
+      hangBuborek.style.display = "none";
+    }
+  }
+
+  function hangIndit(e) {
+    if (e) e.preventDefault();
+    if (hangInterval !== null) return;
+    gomb.classList.add("lenyomva");
+    mutatHangos(true);
+    let fel = true;
+    hangInterval = setInterval(() => {
+      fel = !fel;
+      mutatHangos(fel);
+    }, 200);
+    gomb.focus();
+  }
+
+  function hangLeallit() {
+    if (hangInterval !== null) {
+      clearInterval(hangInterval);
+      hangInterval = null;
+    }
+    const cfg = ALLATOK[aktualisMod];
+    gomb.classList.remove("lenyomva");
+    mutatHangos(false);
+    kep.src = cfg.nyugodt;
+    hangBuborek.style.display = "none";
+    allapot.textContent = cfg.csendesAllapot;
+  }
+
+  function modValtas(mod) {
+    hangLeallit();
+    aktualisMod = mod;
+    const cfg = ALLATOK[mod];
+    document.body.classList.toggle("macska-mod", mod === "macska");
+    document.title = mod === "kutya" ? "Kutya / Macska hanggomb" : "Kutya / Macska hanggomb";
+    cim.textContent = cfg.cim;
+    leiras.innerHTML = cfg.leiras;
+    gomb.textContent = cfg.gomb;
+    hangBuborek.textContent = cfg.buborek;
+    kep.src = cfg.nyugodt;
+    kep.alt = cfg.alt;
+    allapot.textContent = cfg.csendesAllapot.replace(" Engedd fel, elhallgat.", "... Nyomd le a gombot!");
+    szamlaloElem.textContent = cfg.szamlaloNev + ": " + hangSzam[mod];
+    kutyaModGomb.className = mod === "kutya" ? "aktiv-kutya" : "";
+    macskaModGomb.className = mod === "macska" ? "aktiv-macska" : "";
+  }
+
+  kutyaModGomb.addEventListener("click", () => modValtas("kutya"));
+  macskaModGomb.addEventListener("click", () => modValtas("macska"));
+
+  // Egér:
+  gomb.addEventListener("mousedown", hangIndit);
+  document.addEventListener("mouseup", hangLeallit);
+  gomb.addEventListener("mouseleave", () => {
+    if (hangInterval !== null) hangLeallit();
+  });
+
+  // Érintőképernyő:
+  gomb.addEventListener("touchstart", hangIndit, { passive: false });
+  gomb.addEventListener("touchend", (e) => { e.preventDefault(); hangLeallit(); });
+  gomb.addEventListener("touchcancel", hangLeallit);
+
+  // Billentyűzet:
+  document.addEventListener("keydown", (e) => {
+    if ((e.code === "Space" || e.code === "Enter") && document.activeElement === gomb && !e.repeat) {
+      hangIndit(e);
+    }
+  });
+  document.addEventListener("keyup", (e) => {
+    if (e.code === "Space" || e.code === "Enter") hangLeallit();
+  });
+
+  kep.addEventListener("dragstart", (e) => e.preventDefault());
+
+  // Kezdő állapot
+  modValtas("kutya");
+</script>
+
+</body>
+</html>
