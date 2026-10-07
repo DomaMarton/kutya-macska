@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kutya / Macska hanggomb</title>
+<title>Kutya / Macska / Gépfegyver</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -12,6 +12,8 @@
     margin: 0;
     padding: 20px;
   }
+  body.gep-mod { background: #263238; color: #eceff1; }
+  body.gep-mod p.leiras { color: #b0bec5; }
   #valto {
     display: inline-block;
     background: #fff;
@@ -20,6 +22,7 @@
     padding: 5px;
     margin-bottom: 10px;
   }
+  body.gep-mod #valto { background: #37474f; border-color: #546e7a; }
   #valto button {
     font-size: 18px;
     padding: 10px 24px;
@@ -28,8 +31,10 @@
     background: transparent;
     cursor: pointer;
   }
+  body.gep-mod #valto button { color: #eceff1; }
   #valto button.aktiv-kutya { background: #8d6e63; color: white; }
   #valto button.aktiv-macska { background: #ff8f00; color: white; }
+  #valto button.aktiv-gep { background: #455a64; color: #ffeb3b; }
   h1 { margin-bottom: 5px; }
   p.leiras { color: #555; margin-top: 0; }
   #kepKeret {
@@ -54,16 +59,27 @@
   }
   body.macska-mod #allatKep { border-color: #ff8f00; }
   body.macska-mod #allatKep.hangotAd { border-color: #e53935; }
+  body.gep-mod #allatKep { border-color: #546e7a; }
+  body.gep-mod #allatKep.hangotAd {
+    border-color: #ffeb3b;
+    animation: gepraz 0.09s infinite;
+  }
   @keyframes raz {
     0% { transform: rotate(-1deg) scale(1.01); }
     50% { transform: rotate(1deg) scale(1.02); }
     100% { transform: rotate(-1deg) scale(1.01); }
+  }
+  @keyframes gepraz {
+    0% { transform: translate(-2px, 1px); filter: brightness(1.3); }
+    50% { transform: translate(2px, -1px); filter: brightness(1.0); }
+    100% { transform: translate(-2px, 1px); filter: brightness(1.3); }
   }
   #hangBuborek {
     position: absolute;
     top: 10px;
     right: 10px;
     background: #ffeb3b;
+    color: #000;
     border: 2px solid #000;
     border-radius: 20px;
     padding: 8px 16px;
@@ -82,6 +98,7 @@
     touch-action: none;
     user-select: none;
   }
+  body.gep-mod #hangGomb { background: #455a64; }
   #hangGomb:active, #hangGomb.lenyomva {
     background: #e53935;
     transform: scale(0.96);
@@ -91,6 +108,7 @@
     margin: 10px 0;
   }
   .forras { font-size: 12px; color: #777; margin-top: 20px; }
+  body.gep-mod .forras, body.gep-mod .forras a { color: #90a4b2; }
   .forras a { color: #777; }
 </style>
 </head>
@@ -99,6 +117,7 @@
 <div id="valto">
   <button id="kutyaModGomb" class="aktiv-kutya">🐶 Kutya</button>
   <button id="macskaModGomb">🐱 Macska</button>
+  <button id="gepModGomb">🔫 Gépfegyver</button>
 </div>
 
 <h1 id="cim">🐶 Nyomd és ugass!</h1>
@@ -125,7 +144,9 @@
   Kutya nyugodt: <a href="https://commons.wikimedia.org/wiki/File:Close-up_portrait_of_dog.jpg" target="_blank">Close-up portrait of dog – Pittigrilli (CC BY-SA 4.0)</a><br>
   Kutya ugat: <a href="https://commons.wikimedia.org/wiki/File:Our_dog_(barking).jpg" target="_blank">Our dog (barking) – Wald-Burger8 (CC BY-SA 3.0)</a><br>
   Macska nyugodt: <a href="https://commons.wikimedia.org/wiki/File:A-Cat.jpg" target="_blank">A-Cat – Florinux (CC BY-SA 3.0)</a><br>
-  Macska nyávog: <a href="https://commons.wikimedia.org/wiki/File:Meowing_Cat.jpg" target="_blank">Meowing Cat – CC0</a>
+  Macska nyávog: <a href="https://commons.wikimedia.org/wiki/File:Meowing_Cat.jpg" target="_blank">Meowing Cat – CC0</a><br>
+  Gépfegyver nyugodt: <a href="https://commons.wikimedia.org/wiki/File:M2_machine_gun.jpg" target="_blank">M2 machine gun – US Navy (public domain)</a><br>
+  Gépfegyver tüzel (éjszakai sorozat, torkolattűz): <a href="https://commons.wikimedia.org/wiki/File:Night_Fire_(22655947289).jpg" target="_blank">Night Fire – Georgia National Guard (CC BY 2.0)</a>
 </div>
 
 <script>
@@ -141,7 +162,8 @@
       csendesAllapot: "😴 A kutya most csendes... Engedd fel, elhallgat.",
       hangosAllapot: "🐕 VAU-VAU! Ugat a kutya...",
       szamlaloNev: "Ugatások száma",
-      alt: "kutya"
+      alt: "kutya",
+      tempo: 200
     },
     macska: {
       nyugodt: "https://upload.wikimedia.org/wikipedia/commons/7/74/A-Cat.jpg",
@@ -153,7 +175,21 @@
       csendesAllapot: "😴 A macska most csendes... Engedd fel, elhallgat.",
       hangosAllapot: "🐈 MIAÚ-MIAÚ! Nyávog a macska...",
       szamlaloNev: "Nyávogások száma",
-      alt: "macska"
+      alt: "macska",
+      tempo: 200
+    },
+    gep: {
+      nyugodt: "https://upload.wikimedia.org/wikipedia/commons/2/2a/M2_machine_gun.jpg",
+      hangos:  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Night_Fire_%2822655947289%29.jpg/960px-Night_Fire_%2822655947289%29.jpg",
+      cim: "🔫 Nyomd és sortűz!",
+      leiras: 'Tartsd <b>lenyomva</b> a gombot (egérrel, ujjal vagy SPACE-szel),<br>amíg nyomva van, a gépfegyver tüzel: gyorsan váltogatja a két képet.',
+      gomb: "🔫 TÜZELJ! (nyomd le és tartsd)",
+      buborek: "RATATATA! 🔥",
+      csendesAllapot: "😴 A gépfegyver most csendes... Engedd fel, elhallgat.",
+      hangosAllapot: "🔫 RATATATA! Tüzel a gépfegyver...",
+      szamlaloNev: "Lövések száma",
+      alt: "gépfegyver",
+      tempo: 90
     }
   };
 
@@ -169,13 +205,14 @@
   const leiras = document.getElementById("leiras");
   const kutyaModGomb = document.getElementById("kutyaModGomb");
   const macskaModGomb = document.getElementById("macskaModGomb");
+  const gepModGomb = document.getElementById("gepModGomb");
 
-  // Mind a 4 kép előtöltése
+  // Mind a 6 kép előtöltése
   Object.values(ALLATOK).forEach(a => { new Image().src = a.nyugodt; new Image().src = a.hangos; });
 
   let hangInterval = null;
   let eppenHangosKep = false;
-  let hangSzam = { kutya: 0, macska: 0 };
+  let hangSzam = { kutya: 0, macska: 0, gep: 0 };
   let audioCtx = null;
 
   function hangotJatszik() {
@@ -197,7 +234,7 @@
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
         osc.start(t);
         osc.stop(t + 0.2);
-      } else {
+      } else if (aktualisMod === "macska") {
         // MIAÚ: hosszabb, magas, felszálló majd leeső
         osc.type = "sawtooth";
         osc.frequency.setValueAtTime(600, t);
@@ -207,6 +244,15 @@
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
         osc.start(t);
         osc.stop(t + 0.4);
+      } else {
+        // GÉPFEGYVER: nagyon rövid, pattogó durranás
+        osc.type = "square";
+        osc.frequency.setValueAtTime(180 + Math.random() * 60, t);
+        osc.frequency.exponentialRampToValueAtTime(55, t + 0.06);
+        gain.gain.setValueAtTime(0.35, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+        osc.start(t);
+        osc.stop(t + 0.08);
       }
     } catch (e) {}
   }
@@ -232,13 +278,14 @@
   function hangIndit(e) {
     if (e) e.preventDefault();
     if (hangInterval !== null) return;
+    const cfg = ALLATOK[aktualisMod];
     gomb.classList.add("lenyomva");
     mutatHangos(true);
     let fel = true;
     hangInterval = setInterval(() => {
       fel = !fel;
       mutatHangos(fel);
-    }, 200);
+    }, cfg.tempo || 200);
     gomb.focus();
   }
 
@@ -260,7 +307,8 @@
     aktualisMod = mod;
     const cfg = ALLATOK[mod];
     document.body.classList.toggle("macska-mod", mod === "macska");
-    document.title = mod === "kutya" ? "Kutya / Macska hanggomb" : "Kutya / Macska hanggomb";
+    document.body.classList.toggle("gep-mod", mod === "gep");
+    document.title = "Kutya / Macska / Gépfegyver";
     cim.textContent = cfg.cim;
     leiras.innerHTML = cfg.leiras;
     gomb.textContent = cfg.gomb;
@@ -271,10 +319,12 @@
     szamlaloElem.textContent = cfg.szamlaloNev + ": " + hangSzam[mod];
     kutyaModGomb.className = mod === "kutya" ? "aktiv-kutya" : "";
     macskaModGomb.className = mod === "macska" ? "aktiv-macska" : "";
+    gepModGomb.className = mod === "gep" ? "aktiv-gep" : "";
   }
 
   kutyaModGomb.addEventListener("click", () => modValtas("kutya"));
   macskaModGomb.addEventListener("click", () => modValtas("macska"));
+  gepModGomb.addEventListener("click", () => modValtas("gep"));
 
   // Egér:
   gomb.addEventListener("mousedown", hangIndit);
